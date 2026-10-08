@@ -1,0 +1,46 @@
+[project]
+name = "letsemploy-publisher"
+version = "0.1.0"
+description = "Python client for the letsemploy publisher GraphQL API"
+readme = "README.md"
+authors = [
+    { name = "Rene Moser", email = "mail@renemoser.net" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+
+[dependency-groups]
+dev = [
+    "graphql-core>=3.2",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

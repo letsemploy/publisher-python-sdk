@@ -1,0 +1,346 @@
+"This directive allows results to be deferred during execution"
+directive @defer(
+    "Deferred behaviour is controlled by this argument"
+    if: Boolean! = true,
+    "A unique label that represents the fragment being deferred"
+    label: String
+  ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Marks the field, argument, input field or enum value as deprecated"
+directive @deprecated(
+    "The reason for the deprecation"
+    reason: String! = "No longer supported"
+  ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION
+
+"This directive disables error propagation when a non nullable field returns null for the given operation."
+directive @experimental_disableErrorPropagation on QUERY | MUTATION | SUBSCRIPTION
+
+"Directs the executor to include this field or fragment only when the `if` argument is true"
+directive @include(
+    "Included when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Indicates an Input Object is a OneOf Input Object."
+directive @oneOf on INPUT_OBJECT
+
+"Directs the executor to skip this field or fragment when the `if` argument is true."
+directive @skip(
+    "Skipped when true."
+    if: Boolean!
+  ) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Exposes a URL that specifies the behaviour of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behaviour of this scalar."
+    url: String!
+  ) on SCALAR
+
+type DeletePayload {
+  deletedId: ID
+  userErrors: [UserError!]!
+}
+
+" --- types ------------------------------------------------------------------"
+type Employer {
+  headquarters: Location!
+  id: ID!
+  industry: String
+  name: String!
+  slug: String!
+  url: String
+}
+
+type EmployerPayload {
+  employer: Employer
+  userErrors: [UserError!]!
+}
+
+type Feed {
+  description: String
+  id: ID!
+  jobs: [Job!]!
+  name: String!
+  "The public ojobpub.json URL (spec 5.1)."
+  publicUrl: String!
+  slug: String!
+}
+
+type FeedPayload {
+  feed: Feed
+  userErrors: [UserError!]!
+}
+
+type Invitation {
+  id: ID!
+  "Who sent it - a person, or a token naming itself (spec 3.11)."
+  invitedBy: String!
+  inviteeEmail: String
+  role: MembershipRole!
+  status: InvitationStatus!
+}
+
+"""
+What an invite attempt did. SENT is deliberately returned both when an invitation
+was created and when no account matched the address: the API must not become an
+oracle for which addresses are registered (spec 2.6). That is why this payload
+carries an outcome and not the invitation.
+"""
+type InvitationPayload {
+  outcome: InviteOutcome
+  userErrors: [UserError!]!
+}
+
+type Job {
+  applyBefore: String
+  category: String
+  description: String
+  endDate: String
+  experienceLevel: ExperienceLevel
+  id: ID!
+  jobType: JobType!
+  language: String!
+  locations: [Location!]!
+  "What the job presents as today: published, expired, incomplete (spec 7.6)."
+  presentation: Presentation!
+  publishedAt: String
+  referenceId: String
+  salaryCurrency: String
+  salaryInterval: SalaryInterval
+  salaryMax: Float
+  salaryMin: Float
+  startDate: String
+  "The stored lifecycle state (spec 4.1)."
+  status: JobStatus!
+  tags: [String!]!
+  title: String!
+  url: String!
+  workLoadPercentMax: Int
+  workLoadPercentMin: Int
+  workType: WorkType
+}
+
+"Offset pagination, matching the back-office (spec 11.5). Ordering is total and stable."
+type JobPage {
+  content: [Job!]!
+  page: Int!
+  size: Int!
+  totalElements: Int!
+  totalPages: Int!
+}
+
+type JobPayload {
+  job: Job
+  userErrors: [UserError!]!
+}
+
+type Location {
+  city: String!
+  country: String!
+  id: ID!
+}
+
+type Member {
+  displayName: String
+  email: String
+  role: MembershipRole!
+  "A suspended member keeps their role but may not act on the employer (spec 2.7)."
+  suspended: Boolean!
+  "When the suspension began, ISO-8601; null while active."
+  suspendedAt: String
+  userId: ID!
+}
+
+type MemberPayload {
+  member: Member
+  userErrors: [UserError!]!
+}
+
+type Mutation {
+  activateJob(id: ID!): JobPayload!
+  addJobToFeed(feedId: ID!, jobId: ID!): FeedPayload!
+  changeMemberRole(role: MembershipRole!, userId: ID!): MemberPayload!
+  createFeed(input: FeedInput!): FeedPayload!
+  createJob(input: JobInput!): JobPayload!
+  createPermalink(input: PermalinkInput!): PermalinkPayload!
+  deactivateJob(id: ID!): JobPayload!
+  deleteJob(id: ID!): DeletePayload!
+  "The URL stops working (404) for everyone using it. To publish nothing, set no feed instead."
+  deletePermalink(id: ID!): DeletePayload!
+  inviteMember(email: String!, role: MembershipRole!): InvitationPayload!
+  reinstateMember(userId: ID!): MemberPayload!
+  removeJobFromFeed(feedId: ID!, jobId: ID!): FeedPayload!
+  removeMember(userId: ID!): DeletePayload!
+  revokeInvitation(id: ID!): DeletePayload!
+  "Switch what the permalink publishes; a null feedId publishes no jobs (spec 5.5)."
+  setPermalinkFeed(feedId: ID, id: ID!): PermalinkPayload!
+  "Keeps the membership and its role but grants nothing until reinstated (spec 2.7)."
+  suspendMember(userId: ID!): MemberPayload!
+  updateEmployer(input: EmployerInput!): EmployerPayload!
+  updateFeed(id: ID!, input: FeedInput!): FeedPayload!
+  updateJob(id: ID!, input: JobInput!): JobPayload!
+  updatePermalink(id: ID!, input: PermalinkInput!): PermalinkPayload!
+}
+
+type Permalink {
+  description: String
+  "What it publishes; null publishes the employer with no jobs."
+  feed: Feed
+  id: ID!
+  name: String!
+  "The public ojobpub.json URL, which never changes (spec 5.5)."
+  url: String!
+}
+
+type PermalinkPayload {
+  permalink: Permalink
+  userErrors: [UserError!]!
+}
+
+"""
+ The management API (spec 11). The employer is implied by the token and is never
+ an argument, so a token cannot name another employer.
+"""
+type Query {
+  "The employer this token belongs to."
+  employer: Employer!
+  feeds: [Feed!]!
+  job(id: ID!): Job
+  jobs(jobType: JobType, page: Int = 0, presentation: Presentation, q: String, size: Int = 20): JobPage!
+  """
+  The token's employer's own locations and tags (spec 3.2, 3.4); another
+  employer's are neither listed nor accepted in JobInput. They are readable
+  because JobInput refers to them by id, and a caller has no other way to
+  learn one.
+  """
+  locations(q: String): [Location!]!
+  members: [Member!]!
+  pendingInvitations: [Invitation!]!
+  "Stable URLs whose feed can be switched (spec 5.5)."
+  permalinks: [Permalink!]!
+  tags(q: String): [Tag!]!
+}
+
+type Tag {
+  id: ID!
+  name: String!
+}
+
+"A rejected input or a broken rule. `code` is stable; `message` is the text the UI shows."
+type UserError {
+  code: String!
+  field: String
+  message: String!
+}
+
+enum ExperienceLevel {
+  DIRECTOR
+  EXECUTIVE
+  JUNIOR
+  LEAD
+  MANAGER
+  MID
+  SENIOR
+}
+
+enum InvitationStatus {
+  ACCEPTED
+  DECLINED
+  PENDING
+  REVOKED
+}
+
+enum InviteOutcome {
+  ALREADY_INVITED
+  ALREADY_MEMBER
+  SENT
+}
+
+enum JobStatus {
+  ACTIVE
+  DRAFT
+  INACTIVE
+}
+
+" --- enums: the published spellings where one exists (spec 6.5) --------------"
+enum JobType {
+  APPRENTICESHIP
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+  PERMANENT
+  TEMPORARY
+  VOLUNTEER
+}
+
+enum MembershipRole {
+  EDITOR
+  OWNER
+}
+
+enum Presentation {
+  DRAFT
+  EXPIRED
+  INACTIVE
+  INCOMPLETE
+  PUBLISHED
+}
+
+enum SalaryInterval {
+  DAILY
+  HOURLY
+  MONTHLY
+  WEEKLY
+  YEARLY
+}
+
+enum WorkType {
+  HYBRID
+  ON_SITE
+  REMOTE
+}
+
+input EmployerInput {
+  headquartersId: ID
+  industry: String
+  name: String!
+  slug: String
+  url: String
+}
+
+input FeedInput {
+  description: String
+  name: String!
+  slug: String
+}
+
+" --- inputs -----------------------------------------------------------------"
+input JobInput {
+  applyBefore: String
+  category: String
+  description: String
+  endDate: String
+  experienceLevel: ExperienceLevel
+  jobType: JobType!
+  language: String!
+  locationIds: [ID!]
+  referenceId: String
+  salaryCurrency: String
+  salaryInterval: SalaryInterval
+  salaryMax: Float
+  salaryMin: Float
+  startDate: String
+  tagIds: [ID!]
+  title: String!
+  url: String!
+  workLoadPercentMax: Int
+  workLoadPercentMin: Int
+  workType: WorkType
+}
+
+"A null or absent feedId publishes no jobs."
+input PermalinkInput {
+  description: String
+  feedId: ID
+  name: String!
+}
