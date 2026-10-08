@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Patch updates arrive as one PR and are auto-merged once CI passes.
+      python-patch:
+        update-types: [patch]
+      python-minor:
+        update-types: [minor]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-patch:
+        update-types: [patch]
+      actions-minor:
+        update-types: [minor]
