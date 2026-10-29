@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
       - name: Set version from tag
         # v1.2.3 -> 1.2.3; uv rejects anything that is not a valid PEP 440 version.
         run: uv version --frozen "${GITHUB_REF_NAME#v}"
@@ -40,5 +40,5 @@ jobs:
         with:
           name: dist
           path: dist/
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
       - run: uv publish
